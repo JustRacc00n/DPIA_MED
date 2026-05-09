@@ -1,0 +1,121 @@
+# Raport DPIA — {{ responses.system.system_name }}
+
+> **Data Protection Impact Assessment** zgodnie z RODO art. 35
+> Wygenerowano: {{ generated_at }}
+> Narzędzie: DPIA-MED v1.0.0 | Bartosz Lewandowski (254364), PWr 2025/2026
+
+---
+
+## 1. Opis systemu
+
+| Pole | Wartość |
+|------|---------|
+| **Nazwa systemu** | {{ responses.system.system_name }} |
+| **Cel przetwarzania** | {{ responses.system.system_purpose }} |
+| **Przetwarzane dane** | {{ responses.system.data_types }} |
+| **Podmioty danych** | {{ responses.system.data_subjects }} |
+| **Zautomatyzowane decyzje** | {{ responses.system.is_automated_decision }} |
+| **Duża skala** | {{ responses.system.is_large_scale }} |
+| **Dane wrażliwe (art. 9 RODO)** | {{ responses.system.is_sensitive_data }} |
+
+### Przepływ danych
+
+{{ responses.system.data_flow }}
+
+---
+
+## 2. Konieczność i proporcjonalność
+
+| Aspekt | Opis |
+|--------|------|
+| **Podstawa prawna** | {{ responses.necessity.legal_basis }} |
+| **Minimalizacja danych** | {{ responses.necessity.data_minimization }} |
+| **Okres retencji** | {{ responses.necessity.retention_period }} |
+| **Anonimizacja / pseudonimizacja** | {{ responses.necessity.anonymization }} |
+| **Nadzór człowieka (human-in-the-loop)** | {{ responses.necessity.human_oversight }} |
+
+---
+
+## 3. Matryca ryzyk
+
+> Skala: Prawdopodobieństwo × Wpływ (1–3 × 1–3).
+> Poziom ryzyka wysokiego: ≥ 6/9. **Ogólny poziom ryzyka: {{ overall_risk }}**
+
+| # | Ryzyko | P | W | Poziom | Ocena | Art. RODO | Art. AI Act | Środek zaradczy | Priorytet |
+|---|--------|---|---|--------|-------|-----------|-------------|-----------------|-----------|
+{% for r in risk_table -%}
+| {{ loop.index }} | {{ r.risk }} | {{ r.probability }} | {{ r.impact }} | {{ r.level }}/9 | {{ r.level_label }} | {{ r.rodo }} | {{ r.ai_act }} | {{ r.mitigation }} | **{{ r.priority }}** |
+{% endfor %}
+
+*P = Prawdopodobieństwo, W = Wpływ*
+
+---
+
+## 4. Środki zaradcze
+
+### Techniczne
+
+{{ responses.measures.measure_technical }}
+
+### Organizacyjne
+
+{{ responses.measures.measure_organizational }}
+
+### Anonimizacja danych DICOM
+
+{{ responses.measures.measure_anonymization_method }}
+
+### Walidacja jakości modelu
+
+{{ responses.measures.measure_validation }}
+
+---
+
+## 5. Klasyfikacja wg AI Act
+
+| Pole | Wartość |
+|------|---------|
+| **Klasyfikacja ryzyka** | {{ responses.ai_act.ai_act_classification }} |
+| **Uzasadnienie** | {{ responses.ai_act.ai_act_justification }} |
+| **Obowiązki** | {{ responses.ai_act.ai_act_obligations }} |
+
+---
+
+## 6. Plan mitygacji z priorytetami
+
+Poniżej zestawienie środków zaradczych posortowanych według priorytetu:
+
+{% set priority_order = ["Pilne", "Ważne", "Zalecane"] -%}
+{% for priority in priority_order -%}
+{% set items = risk_table | selectattr("priority", "equalto", priority) | list -%}
+{% if items %}
+### {{ priority }}
+
+{% for r in items -%}
+- **{{ r.risk }}** — {{ r.mitigation }}
+  *(poziom ryzyka: {{ r.level }}/9, art. RODO: {{ r.rodo }}, art. AI Act: {{ r.ai_act }})*
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+---
+
+## 7. Wnioski i decyzja
+
+| Pole | Wartość |
+|------|---------|
+| **Decyzja** | **{{ responses.conclusion.conclusion_decision }}** |
+| **Uzasadnienie** | {{ responses.conclusion.conclusion_summary }} |
+| **Konsultacja z IOD** | {{ responses.conclusion.dpo_consulted }} |
+
+{% if overall_risk == "WYSOKIE" %}
+> ⚠️ **Uwaga:** Zidentyfikowano ryzyka wysokiego poziomu. Przed przetwarzaniem danych należy wdrożyć środki zaradcze oznaczone jako **Pilne**. Rozważyć uprzednią konsultację z organem nadzorczym (art. 36 RODO).
+{% elif overall_risk == "ŚREDNIE" %}
+> ℹ️ Zidentyfikowano ryzyka średniego poziomu. Zalecane wdrożenie środków zaradczych przed rozpoczęciem przetwarzania.
+{% else %}
+> ✅ Zidentyfikowane ryzyka są niskiego poziomu. Standardowe środki bezpieczeństwa są wystarczające.
+{% endif %}
+
+---
+
+*Raport wygenerowany przez DPIA-MED — narzędzie półautomatyczne. Nie zastępuje opinii prawnej ani decyzji Inspektora Ochrony Danych.*
