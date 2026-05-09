@@ -85,18 +85,32 @@
 
 Poniżej zestawienie środków zaradczych posortowanych według priorytetu:
 
-{% set priority_order = ["Pilne", "Ważne", "Zalecane"] -%}
-{% for priority in priority_order -%}
-{% set items = risk_table | selectattr("priority", "equalto", priority) | list -%}
-{% if items %}
-### {{ priority }}
+### 🔴 Pilne
 
-{% for r in items -%}
+{% set ns = namespace(found=false) %}
+{% for r in risk_table %}{% if r.priority == "Pilne" %}{% set ns.found = true %}
 - **{{ r.risk }}** — {{ r.mitigation }}
-  *(poziom ryzyka: {{ r.level }}/9, art. RODO: {{ r.rodo }}, art. AI Act: {{ r.ai_act }})*
-{% endfor %}
-{% endif %}
-{% endfor %}
+  *(poziom ryzyka: {{ r.level }}/9 | RODO: {{ r.rodo }} | AI Act: {{ r.ai_act }})*
+{% endif %}{% endfor %}
+{% if not ns.found %}*Brak ryzyk wymagających pilnego działania.*{% endif %}
+
+### 🟡 Ważne
+
+{% set ns2 = namespace(found=false) %}
+{% for r in risk_table %}{% if r.priority == "Ważne" %}{% set ns2.found = true %}
+- **{{ r.risk }}** — {{ r.mitigation }}
+  *(poziom ryzyka: {{ r.level }}/9 | RODO: {{ r.rodo }} | AI Act: {{ r.ai_act }})*
+{% endif %}{% endfor %}
+{% if not ns2.found %}*Brak ryzyk o średnim priorytecie.*{% endif %}
+
+### 🟢 Zalecane
+
+{% set ns3 = namespace(found=false) %}
+{% for r in risk_table %}{% if r.priority == "Zalecane" %}{% set ns3.found = true %}
+- **{{ r.risk }}** — {{ r.mitigation }}
+  *(poziom ryzyka: {{ r.level }}/9 | RODO: {{ r.rodo }} | AI Act: {{ r.ai_act }})*
+{% endif %}{% endfor %}
+{% if not ns3.found %}*Brak ryzyk zalecanych.*{% endif %}
 
 ---
 

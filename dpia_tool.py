@@ -384,9 +384,13 @@ def build_risk_table(responses: dict) -> list:
             continue
 
         level = risk_data.get("level", 0)
-        # Priorytet środka zaradczego: kombinacja poziomu ryzyka i priority_base
-        priority_score = min(3, round((level / 9 * 2 + mapping["priority_base"] / 3) ))
-        priority = PRIORITY_LABELS.get(priority_score, "Zalecane")
+        # Priorytet środka zaradczego: wynika wprost z poziomu ryzyka
+        if level >= 6:
+            priority = "Pilne"
+        elif level >= 3:
+            priority = "Ważne"
+        else:
+            priority = "Zalecane"
 
         # Znajdź opis ryzyka z kwestionariusza
         risk_label = next(
@@ -444,6 +448,16 @@ def load_responses(input_path: Path) -> dict:
 # Główna funkcja
 # ---------------------------------------------------------------------------
 
+def _slugify(text: str) -> str:
+    """Zamienia tekst na bezpieczną nazwę pliku (tylko litery, cyfry, podkreślniki)."""
+    import re
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)   # usuń znaki specjalne
+    text = re.sub(r"\s+", "_", text)       # spacje na podkreślniki
+    text = re.sub(r"_+", "_", text)        # wielokrotne podkreślniki → jedno
+    return text.strip("_")[:50]            # max 50 znaków
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="DPIA-MED — Półautomatyczne narzędzie DPIA dla systemów AI w medycynie"
@@ -474,13 +488,13 @@ def main():
     else:
         responses = run_questionnaire()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        system_name = responses.get("system", {}).get("system_name", "dpia").replace(" ", "_").lower()
+        system_name = _slugify(responses.get("system", {}).get("system_name", "dpia"))
         responses_path = args.responses_dir / f"{system_name}_{timestamp}.json"
         save_responses(responses, responses_path)
 
     # Generuj raport
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    system_name = responses.get("system", {}).get("system_name", "dpia").replace(" ", "_").lower()
+    system_name = _slugify(responses.get("system", {}).get("system_name", "dpia"))
     report_path = args.output_dir / f"dpia_{system_name}.md"
     generate_report(responses, report_path)
 

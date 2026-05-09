@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "generated_at": "2026-05-09T10:00:00",
+    "tool_version": "1.0.0",
+    "case": "SMARTudl MAR pipeline — testowy przypadek DPIA"
+  },
+  "system": {
+    "system_name": "SMARTudl — Metal Artifact Reduction (MAR) pipeline",
+    "system_purpose": "Usuwanie artefaktów metalicznych z obrazów tomografii komputerowej (CT) przy użyciu głębokich sieci neuronowych, w celu poprawy jakości diagnostycznej obrazów pacjentów z implantami metalowymi (protezy, śruby ortopedyczne, implanty dentystyczne). System ma charakter wspierający — nie podejmuje decyzji diagnostycznych.",
+    "data_types": "Obrazy tomografii komputerowej w formacie DICOM (28 realnych skanów ze szpitala + publiczne datasety: AAPM CT MAR, DeepLesion). Dane mogą zawierać przekroje głowy, klatki piersiowej i brzucha. Przed przekazaniem do zespołu dane są anonimizowane po stronie szpitala.",
+    "data_subjects": "Pacjenci szpitala partnerskiego posiadający metalowe implanty (protezy stawowe, śruby ortopedyczne, implanty dentystyczne). Dane szpitalne: 28 osób. Dane publiczne: anonimowe zbiory bez możliwości identyfikacji.",
+    "data_flow": "Szpital (eksport DICOM z usunięciem identyfikatorów) → zaszyfrowany nośnik fizyczny → Bartosz Lewandowski (weryfikacja anonimizacji + defacing) → usunięcie niezanonimizowanych plików → klaster HPC Helios/PLGrid (SSH/SFTP, odizolowana przestrzeń robocza) → trening modelu MAR → wagi modelu + wyniki → publikacja (bez danych szpitalnych).",
+    "is_automated_decision": "nie",
+    "is_large_scale": "nie",
+    "is_sensitive_data": "tak"
+  },
+  "necessity": {
+    "legal_basis": "art. 9 ust. 2 lit. j RODO (przetwarzanie do celów badań naukowych) w związku z art. 89 RODO (zabezpieczenia przy przetwarzaniu do celów naukowych). Podstawa uzupełniająca: Data Use Agreement podpisana ze szpitalem regulująca zakres i cel przetwarzania.",
+    "data_minimization": "Zasada minimalizacji (art. 5 ust. 1 lit. c RODO) jest realizowana przez: (1) anonimizację danych przed przekazaniem, (2) ograniczenie dostępu do danych niezanonimizowanych wyłącznie do jednej osoby, (3) natychmiastowe usunięcie surowych danych po anonimizacji, (4) brak przesyłania danych szpitalnych poza Polskę.",
+    "retention_period": "Dane szpitalne (zanonimizowane): przechowywane na czas realizacji projektu. Niezanonimizowane dane: usuwane niezwłocznie po anonimizacji (brak kopii zapasowych). Po zakończeniu projektu: zanonimizowane dane usuwane zgodnie z warunkami DUA. Wagi modelu: mogą być przechowywane dłużej, ale bez możliwości publikacji bez zgody szpitala.",
+    "anonymization": "Wieloetapowa anonimizacja danych DICOM: (1) usunięcie bezpośrednich identyfikatorów z nagłówków pliku (imię, nazwisko, PESEL, data urodzenia, adres, ID pacjenta w systemie szpitalnym); (2) uogólnienie dat — zastąpienie dokładnej daty urodzenia i badania samym rokiem; (3) weryfikacja warstwy wizualnej skanów i zamazanie ewentualnych danych nałożonych na piksele przez sprzęt medyczny; (4) defacing — algorytmiczne usunięcie rysów twarzy z skanów 3D obejmujących twarzoczaszkę.",
+    "human_oversight": "Lekarz/radiolog pozostaje w pętli decyzyjnej na każdym etapie diagnostycznym. Model przetwarza obrazy jako narzędzie wspomagające (human-in-the-loop): przygotowanie danych (ocena jakości przez badacza), ocena wyników modelu (weryfikacja przez specjalistę), interpretacja kliniczna (wyłączna kompetencja lekarza). Obrazy przetworzone przez AI są oznaczane jako 'AI-processed'."
+  },
+  "risks": {
+    "risk_data_breach": {
+      "probability": 2,
+      "impact": 3,
+      "level": 6,
+      "level_label": "WYSOKIE"
+    },
+    "risk_reidentification": {
+      "probability": 1,
+      "impact": 3,
+      "level": 3,
+      "level_label": "ŚREDNIE"
+    },
+    "risk_diagnostic_error": {
+      "probability": 2,
+      "impact": 3,
+      "level": 6,
+      "level_label": "WYSOKIE"
+    },
+    "risk_bias": {
+      "probability": 2,
+      "impact": 2,
+      "level": 4,
+      "level_label": "ŚREDNIE"
+    },
+    "risk_infrastructure": {
+      "probability": 1,
+      "impact": 2,
+      "level": 2,
+      "level_label": "NISKIE"
+    },
+    "risk_model_weights": {
+      "probability": 1,
+      "impact": 2,
+      "level": 2,
+      "level_label": "NISKIE"
+    }
+  },
+  "measures": {
+    "measure_technical": "Szyfrowanie nośników fizycznych (full-disk encryption, silne hasło); przesyłanie danych wyłącznie przez SSH/SFTP; odizolowana przestrzeń robocza na klastrze Helios; brak dostępu do danych niezanonimizowanych dla pozostałych członków zespołu; brak kopii zapasowych danych surowych.",
+    "measure_organizational": "Data Use Agreement podpisana ze szpitalem (zakres, cel, warunki usunięcia danych); ograniczenie dostępu do danych niezanonimizowanych wyłącznie do Bartosza Lewandowskiego; procedura natychmiastowego usunięcia niezanonimizowanych plików po anonimizacji; świadome korzystanie z infrastruktury PLGrid zgodnie z regulaminem (cytowanie Heliosa w publikacjach); brak możliwości udostępniania danych szpitalnych ani wag modelu bez wyraźnej zgody szpitala.",
+    "measure_anonymization_method": "Anonimizacja plików DICOM w 4 etapach: (1) Usunięcie tagów identyfikacyjnych z nagłówka DICOM: PatientName, PatientID, PatientBirthDate, PatientSex (pełna data → rok), StudyDate, StudyTime, InstitutionName, ReferringPhysicianName, PatientAddress; (2) Przypisanie losowego pseudonimu jako nowego PatientID; (3) Weryfikacja warstwy pikselowej — sprawdzenie czy sprzęt medyczny nie nałożył danych na obraz (pixel burn-in) i zamazanie ewentualnych napisów; (4) Defacing algorytmem usuwającym zewnętrzne rysy twarzy z skanów 3D (dotyczy skanów obejmujących głowę i twarzoczaszkę).",
+    "measure_validation": "Walidacja ilościowa na zbiorze testowym: metryki PSNR (Peak Signal-to-Noise Ratio) i SSIM (Structural Similarity Index) porównywane z obrazami referencyjnymi. Walidacja jakościowa: ocena przez specjalistę radiologii — czy kliniczne struktury anatomiczne są zachowane. Oznaczanie wszystkich obrazów przetworzonych przez model adnotacją 'AI-processed — not for direct clinical use'. Testy na zróżnicowanych przypadkach (różne typy implantów, różne protokoły skanowania)."
+  },
+  "ai_act": {
+    "ai_act_classification": "ograniczone",
+    "ai_act_justification": "W obecnej formie system jest narzędziem badawczym wspomagającym poprawę jakości obrazów CT — nie podejmuje autonomicznych decyzji medycznych i nie jest wdrożony klinicznie. Annex III pkt 5a AI Act obejmuje systemy AI przeznaczone do stosowania jako wyroby medyczne lub w wyrobach medycznych w rozumieniu dyrektywy 93/42/EWG lub rozporządzenia (UE) 2017/745 — co nie dotyczy etapu badawczego projektu. Gdyby system został włączony do produktu klinicznego lub używany bezpośrednio w diagnostyce, wymagałaby klasyfikacji jako wysokiego ryzyka. Ograniczone obowiązki transparentności (art. 50 AI Act) mogą dotyczyć systemu jeśli generuje treści mogące być mylone z autentycznymi obrazami medycznymi.",
+    "ai_act_obligations": "Transparentność: oznaczanie przetworzonych obrazów jako 'AI-processed' (art. 13 AI Act — informacje dla użytkowników); nadzór człowieka na każdym etapie diagnostycznym (art. 14 AI Act); zarządzanie ryzykiem przez cały cykl życia systemu (art. 9 AI Act); odpowiednia jakość i reprezentatywność danych treningowych — unikanie bias wobec grup pacjentów (art. 10 AI Act); dokumentacja techniczna opisująca ograniczenia modelu (art. 11 AI Act w przypadku klasyfikacji jako high-risk)."
+  },
+  "conclusion": {
+    "conclusion_decision": "wdrożyć po wdrożeniu środków zaradczych",
+    "conclusion_summary": "System MAR w fazie badawczej może być używany po potwierdzeniu wdrożenia opisanych środków technicznych i organizacyjnych. Dwa ryzyka wysokiego poziomu (wyciek danych medycznych oraz błąd diagnostyczny spowodowany przez model) wymagają priorytetowego zaadresowania: szyfrowania nośników i kanałów transmisji oraz utrzymania nadzoru lekarza z obligatoryjnym oznaczaniem obrazów przetworzonych przez AI. System nie powinien być używany w praktyce klinicznej bez uprzedniej pełnej walidacji klinicznej i zmiany klasyfikacji wg AI Act na 'wysokie ryzyko' z odpowiadającymi obowiązkami compliance.",
+    "dpo_consulted": "nie"
+  }
+}
