@@ -24,8 +24,8 @@ Narzędzie zostało przetestowane na realnym przypadku — pipeline'u Metal Arti
 
 ```bash
 # 1. Sklonuj repozytorium
-git clone https://github.com/TWOJ_LOGIN/dpia-mar.git
-cd dpia-mar
+git clone https://github.com/JustRacc00n/DPIA_MED.git
+cd DPIA_MED
 
 # 2. Utwórz wirtualne środowisko i zainstaluj zależności
 python -m venv .venv
